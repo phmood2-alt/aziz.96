@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام محلات المصنعة - الإدارة المتكاملة</title>
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #ff9f43;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --bill-color: #9b59b6;
+            --light-bg: #f4f7f6;
+        }
+
+        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--light-bg); }
+
+        #welcome-screen {
+            position: fixed; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; transition: 0.8s;
+        }
+
+        #welcome-screen h1 { color: white; font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+
+        #main-content { display: none; padding: 20px; opacity: 0; transition: 1s; }
+        .container { max-width: 1500px; margin: auto; }
+
+        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
+        
+        input, select, button { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; }
+        button { cursor: pointer; transition: 0.3s; font-weight: bold; border: none; }
+        
+        .btn-rent { background: var(--secondary-color); color: white; }
+        .btn-bill { background: var(--bill-color); color: white; }
+        .btn-update { background: #34495e; color: white; }
+
+        .table-container { overflow-x: auto; background: white; border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.85rem; }
+        th { background: #f8f9fa; color: #555; }
+
+        .rent-section { background-color: #f0f7ff; }
+        .bill-section { background-color: #fdf0ff; }
+
+        .expiry-alert { color: white; background-color: var(--danger-color); padding: 4px; border-radius: 4px; font-weight: bold; }
+        .expiry-warning { color: white; background-color: var(--accent-color); padding: 4px; border-radius: 4px; font-weight: bold; }
+
+        .whatsapp-btn { background: #25D366; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen">
+        <h1>محلات المصنعة</h1>
+        <button onclick="startApp()" style="padding: 15px 40px; background: var(--accent-color); color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold;">دخول النظام</button>
+    </div>
+
+    <div id="main-content">
+        <div class="container">
+            <header>
+                <h2>نظام إدارة العقار (حسابات منفصلة ومواعيد العقود)</h2>
+                <div style="margin-top: 10px;">
+                    <label>هاتف المالك: </label>
+                    <input type="text" id="ownerPhone" placeholder="968XXXXXXXX" style="width: 160px; border-radius: 5px; border: none; padding: 5px;">
+                </div>
+            </header>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 15px;">
+                <div class="card">
+                    <h3>🏠 إعدادات العقد والانتهاء</h3>
+                    <div class="form-grid">
+                        <div><label>المحل</label><select id="shopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                        <div><label>المستأجر</label><input type="text" id="tenantName"></div>
+                        <div><label>تاريخ البدء</label><input type="date" id="startDate"></div>
+                        <div><label>تاريخ الانتهاء</label><input type="date" id="endDate"></div>
+                        <div><label>الدفع كل</label>
+                            <select id="payCycle">
+                                <option value="1">شهر</option><option value="2">شهرين</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12">سنة</option>
+                            </select>
+                        </div>
+                        <div><label>قيمة الإيجار</label><input type="number" id="rentAmount"></div>
+                        <button class="btn-update" onclick="updateShop()">تحديث العقد</button>
+                    </div>
+                </div>
+
+                <div class="card" style="border-top-color: var(--success-color)">
+                    <h3>💰 تسجيل دفع مبلغ</h3>
+                    <div class="form-grid">
+                        <div><label>المحل</label><select id="payShopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                        <div><label>المبلغ</label><input type="number" id="payAmount"></div>
+                        <div><label>الجهة</label><select id="payTarget"><option value="rent">الإيجار</option><option value="bills">الفواتير</option></select></div>
+                        <button class="btn-rent" onclick="addAction('pay')">تأكيد الدفع ✅</button>
+                    </div>
+                </div>
+
+                <div class="card" style="border-top-color: var(--bill-color)">
+                    <h3>🔌 إضافة فواتير</h3>
+                    <div class="form-grid">
+                        <div><label>المحل</label><select id="billShopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+                        <div><label>المبلغ</label><input type="number" id="billAmount"></div>
+                        <div><label>النوع</label><select id="billNote"><option value="كهرباء">كهرباء</option><option value="ماء">ماء</option></select></div>
+                        <button class="btn-bill" onclick="addAction('bill')">إضافة الفاتورة ➕</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">المحل / المستأجر</th>
+                            <th colspan="5" class="rent-section">حساب الإيجار ومواعيد العقود (ر.ع)</th>
+                            <th colspan="3" class="bill-section">حساب الفواتير (ر.ع)</th>
+                            <th rowspan="2">التقرير</th>
+                        </tr>
+                        <tr>
+                            <th class="rent-section">المطلوب</th>
+                            <th class="rent-section">المدفوع</th>
+                            <th class="rent-section">المتبقي</th>
+                            <th class="rent-section">الدفع القادم</th>
+                            <th class="rent-section">انتهاء العقد</th>
+                            <th class="bill-section">المطلوب</th>
+                            <th class="bill-section">المدفوع</th>
+                            <th class="bill-section">المتبقي</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startApp() {
+            document.getElementById('welcome-screen').style.transform = 'translateY(-100%)';
+            document.getElementById('main-content').style.display = 'block';
+            setTimeout(() => { document.getElementById('main-content').style.opacity = '1'; }, 100);
+            renderTable();
+        }
+
+        let shops = JSON.parse(localStorage.getItem('musannah_final_v5')) || [
+            { id: 1, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
+            { id: 2, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
+            { id: 3, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
+            { id: 4, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] }
+        ];
+
+        function updateShop() {
+            const i = document.getElementById('shopId').value - 1;
+            shops[i].tenant = document.getElementById('tenantName').value || '-';
+            shops[i].rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+            shops[i].startDate = document.getElementById('startDate').value;
+            shops[i].endDate = document.getElementById('endDate').value;
+            shops[i].cycle = parseInt(document.getElementById('payCycle').value);
+            save();
+            alert("تم تحديث بيانات العقد");
+        }
+
+        function addAction(type) {
+            if(type === 'pay') {
+                const i = document.getElementById('payShopId').value - 1;
+                const amt = parseFloat(document.getElementById('payAmount').value);
+                const target = document.getElementById('payTarget').value;
+                if(!amt) return;
+                if(target === 'rent') shops[i].rentPaid += amt; else shops[i].billsPaid += amt;
+                document.getElementById('payAmount').value = '';
+            } else {
+                const i = document.getElementById('billShopId').value - 1;
+                const amt = parseFloat(document.getElementById('billAmount').value);
+                const note = document.getElementById('billNote').value;
+                if(!amt) return;
+                shops[i].billsTotal += amt;
+                document.getElementById('billAmount').value = '';
+            }
+            save();
+        }
+
+        function save() {
+            localStorage.setItem('musannah_final_v5', JSON.stringify(shops));
+            localStorage.setItem('owner_phone', document.getElementById('ownerPhone').value);
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const phone = localStorage.getItem('owner_phone') || '';
+            const today = new Date();
+
+            shops.forEach(shop => {
+                let nextPay = '-';
+                if (shop.startDate) {
+                    let d = new Date(shop.startDate);
+                    while (d <= today) d.setMonth(d.getMonth() + shop.cycle);
+                    nextPay = d.toISOString().split('T')[0];
+                }
+
+                let endClass = '';
+                if (shop.endDate) {
+                    const end = new Date(shop.endDate);
+                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 0) endClass = 'expiry-alert';
+                    else if (diffDays <= 30) endClass = 'expiry-warning';
+                }
+
+                let rentRem = shop.rent - shop.rentPaid;
+                let billRem = shop.billsTotal - shop.billsPaid;
+
+                const msg = `🏢 *تقرير محل ${shop.id}*%0A👤 ${shop.tenant}%0A------------------%0A🏠 *الإيجار:*%0Aالمتبقي: ${rentRem} ر.ع%0A📅 القادم: ${nextPay}%0A⌛ انتهاء العقد: ${shop.endDate || '-'}%0A------------------%0A🔌 *الفواتير:*%0Aالمتبقي: ${billRem} ر.ع`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>#${shop.id}</b><br><small>${shop.tenant}</small></td>
+                        <td class="rent-section">${shop.rent}</td>
+                        <td class="rent-section">${shop.rentPaid}</td>
+                        <td class="rent-section" style="font-weight:bold; color:${rentRem>0?'red':'green'}">${rentRem}</td>
+                        <td class="rent-section">${nextPay}</td>
+                        <td class="rent-section"><span class="${endClass}">${shop.endDate || '-'}</span></td>
+                        <td class="bill-section">${shop.billsTotal}</td>
+                        <td class="bill-section">${shop.billsPaid}</td>
+                        <td class="bill-section" style="font-weight:bold; color:${billRem>0?'red':'green'}">${billRem}</td>
+                        <td><a href="https://wa.me/${phone}?text=${msg}" target="_blank" class="whatsapp-btn">واتساب 💬</a></td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
