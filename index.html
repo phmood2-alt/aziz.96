@@ -2,237 +2,358 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام محلات المصنعة - الإدارة المتكاملة</title>
+    <title>نظام ذَوْد الذكي - النسخة الأمنية المتكاملة</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --primary-color: #1e3c72;
-            --secondary-color: #2a5298;
-            --accent-color: #ff9f43;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --bill-color: #9b59b6;
-            --light-bg: #f4f7f6;
+            --dark: #05050a;
+            --primary: #ff2e63;
+            --secondary: #08d9d6;
+            --accent: #1a1a2e;
+            --text: #ffffff;
+            --rich: #ffd700;
+            --poor: #adff2f;
+            --recom-bg: rgba(8, 217, 214, 0.1);
         }
 
-        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--light-bg); }
+        body, html {
+            margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--dark); color: var(--text); overflow: hidden;
+        }
 
-        #welcome-screen {
-            position: fixed; width: 100%; height: 100%;
+        /* واجهة الدخول الحيوية */
+        #landing-page {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-                        url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1350&q=80');
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070');
             background-size: cover; background-position: center;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 1000; transition: 0.8s;
+            z-index: 2000; transition: 0.8s ease-in-out;
         }
 
-        #welcome-screen h1 { color: white; font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        .welcome-box {
+            text-align: center; backdrop-filter: blur(10px);
+            padding: 50px; border-radius: 20px; border: 1px solid var(--primary);
+            box-shadow: 0 0 30px rgba(255, 46, 99, 0.3);
+            animation: fadeIn 1.5s ease;
+        }
 
-        #main-content { display: none; padding: 20px; opacity: 0; transition: 1s; }
-        .container { max-width: 1500px; margin: auto; }
+        .welcome-box h1 { font-size: 4em; color: var(--primary); margin: 0; text-shadow: 0 0 20px var(--primary); }
+        .welcome-box p { font-size: 1.2em; letter-spacing: 2px; margin-bottom: 30px; color: var(--secondary); }
 
-        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-enter {
+            padding: 15px 40px; font-size: 1.5em; background: var(--primary);
+            color: white; border: none; border-radius: 50px; cursor: pointer;
+            transition: 0.3s; font-weight: bold; text-transform: uppercase;
+        }
+        .btn-enter:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--primary); }
 
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
-        
-        input, select, button { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; }
-        button { cursor: pointer; transition: 0.3s; font-weight: bold; border: none; }
-        
-        .btn-rent { background: var(--secondary-color); color: white; }
-        .btn-bill { background: var(--bill-color); color: white; }
-        .btn-update { background: #34495e; color: white; }
+        /* الواجهة الرئيسية */
+        #main-system {
+            display: flex; height: 100vh; opacity: 0; visibility: hidden; transition: 0.5s;
+            background: rgba(0,0,0,0.85);
+        }
 
-        .table-container { overflow-x: auto; background: white; border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1400px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.85rem; }
-        th { background: #f8f9fa; color: #555; }
+        .sidebar {
+            width: 420px; background: rgba(15, 15, 25, 0.95); padding: 25px;
+            border-left: 2px solid var(--primary); overflow-y: auto; z-index: 100;
+        }
 
-        .rent-section { background-color: #f0f7ff; }
-        .bill-section { background-color: #fdf0ff; }
+        .form-group { margin-bottom: 12px; }
+        label { font-size: 0.85em; color: var(--secondary); display: block; margin-bottom: 5px; }
 
-        .expiry-alert { color: white; background-color: var(--danger-color); padding: 4px; border-radius: 4px; font-weight: bold; }
-        .expiry-warning { color: white; background-color: var(--accent-color); padding: 4px; border-radius: 4px; font-weight: bold; }
+        input, select, button {
+            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--accent);
+            background: #000; color: white; margin-bottom: 5px;
+        }
 
-        .whatsapp-btn { background: #25D366; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+        button.action-btn {
+            background: var(--primary); border: none; font-weight: bold; cursor: pointer;
+            margin-top: 10px; padding: 15px; transition: 0.3s;
+        }
+
+        #map { flex-grow: 1; border-radius: 0; cursor: crosshair; }
+
+        /* وحدة التوصيات والقائمة */
+        .recommendation-box, .incidents-list-box {
+            margin-top: 15px; padding: 12px; background: var(--recom-bg);
+            border-right: 3px solid var(--secondary); border-radius: 4px;
+            font-size: 0.85em;
+        }
+        .recommendation-box h5, .incidents-list-box h5 { margin: 0 0 8px 0; color: var(--secondary); display: flex; align-items: center; gap: 5px; }
+
+        .incident-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.05); padding: 5px 10px; margin-bottom: 5px; border-radius: 4px;
+        }
+        .delete-btn { width: auto; background: none; border: none; color: var(--primary); cursor: pointer; padding: 0; margin: 0; }
+
+        .modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #600; color: white; padding: 30px; border-radius: 15px;
+            z-index: 3000; text-align: center; border: 2px solid var(--primary);
+            box-shadow: 0 0 100px rgba(255,0,0,0.8);
+        }
+
+        .pulse-icon {
+            background: var(--primary); border-radius: 50%;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div id="welcome-screen">
-        <h1>محلات المصنعة</h1>
-        <button onclick="startApp()" style="padding: 15px 40px; background: var(--accent-color); color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: bold;">دخول النظام</button>
+<div id="landing-page">
+    <div class="welcome-box">
+        <h1>نظام ذَوْد</h1>
+        <p>التحليل الجنائي الذكي والتوصيات الأمنية</p>
+        <button class="btn-enter" onclick="enterSystem()">دخول النظام <i class="fas fa-shield-alt"></i></button>
     </div>
+</div>
 
-    <div id="main-content">
-        <div class="container">
-            <header>
-                <h2>نظام إدارة العقار (حسابات منفصلة ومواعيد العقود)</h2>
-                <div style="margin-top: 10px;">
-                    <label>هاتف المالك: </label>
-                    <input type="text" id="ownerPhone" placeholder="968XXXXXXXX" style="width: 160px; border-radius: 5px; border: none; padding: 5px;">
-                </div>
-            </header>
+<div class="modal" id="alertModal">
+    <i class="fas fa-radiation fa-4x" style="margin-bottom: 15px;"></i>
+    <h2>تحذير أمني عاجل!</h2>
+    <p id="modalMsg"></p>
+    <button onclick="closeModal()" style="background: white; color: black; border: none; padding: 10px 20px; cursor: pointer;">تم الاستلام</button>
+</div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 15px;">
-                <div class="card">
-                    <h3>🏠 إعدادات العقد والانتهاء</h3>
-                    <div class="form-grid">
-                        <div><label>المحل</label><select id="shopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
-                        <div><label>المستأجر</label><input type="text" id="tenantName"></div>
-                        <div><label>تاريخ البدء</label><input type="date" id="startDate"></div>
-                        <div><label>تاريخ الانتهاء</label><input type="date" id="endDate"></div>
-                        <div><label>الدفع كل</label>
-                            <select id="payCycle">
-                                <option value="1">شهر</option><option value="2">شهرين</option><option value="3">3 أشهر</option><option value="6">6 أشهر</option><option value="12">سنة</option>
-                            </select>
-                        </div>
-                        <div><label>قيمة الإيجار</label><input type="number" id="rentAmount"></div>
-                        <button class="btn-update" onclick="updateShop()">تحديث العقد</button>
-                    </div>
-                </div>
+<div id="main-system">
+    <div class="sidebar">
+        <h2 style="color: var(--primary); text-align: center;"><i class="fas fa-user-shield"></i> لوحة التحكم</h2>
+        
+        <div class="form-group">
+            <label>نوع الجريمة</label>
+            <select id="crimeType">
+                <option>سرقة</option><option>اعتداء</option><option>تخريب</option><option>احتيال</option><option>سطو مسلح</option>
+            </select>
+        </div>
 
-                <div class="card" style="border-top-color: var(--success-color)">
-                    <h3>💰 تسجيل دفع مبلغ</h3>
-                    <div class="form-grid">
-                        <div><label>المحل</label><select id="payShopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
-                        <div><label>المبلغ</label><input type="number" id="payAmount"></div>
-                        <div><label>الجهة</label><select id="payTarget"><option value="rent">الإيجار</option><option value="bills">الفواتير</option></select></div>
-                        <button class="btn-rent" onclick="addAction('pay')">تأكيد الدفع ✅</button>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>التصنيف الاقتصادي للمنطقة</label>
+            <select id="areaEconomy">
+                <option value="غنية">منطقة راقية / غنية</option>
+                <option value="متوسطة">منطقة متوسطة</option>
+                <option value="فقيرة">منطقة شعبية / فقيرة</option>
+                <option value="صناعية">منطقة صناعية</option>
+            </select>
+        </div>
 
-                <div class="card" style="border-top-color: var(--bill-color)">
-                    <h3>🔌 إضافة فواتير</h3>
-                    <div class="form-grid">
-                        <div><label>المحل</label><select id="billShopId"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
-                        <div><label>المبلغ</label><input type="number" id="billAmount"></div>
-                        <div><label>النوع</label><select id="billNote"><option value="كهرباء">كهرباء</option><option value="ماء">ماء</option></select></div>
-                        <button class="btn-bill" onclick="addAction('bill')">إضافة الفاتورة ➕</button>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>الدافع الرئيسي</label>
+            <select id="crimeReason">
+                <option value="اقتصادي">ضائقة مادية / فقر</option>
+                <option value="أمني">انعدام الرقابة/الكاميرات</option>
+                <option value="اجتماعي">تفكك أسري / خلافات</option>
+                <option value="نفسي">اضطراب سلوكي / انتقام</option>
+                <option value="مخدرات">تعاطي مواد مخدرة</option>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>الوقت</label>
+                <select id="crimeTime"><option>صباحاً</option><option>ظهراً</option><option>مساءً</option><option>فجراً</option></select>
             </div>
+            <div class="form-group" style="flex: 1;">
+                <label>الفصل</label>
+                <select id="crimeSeason"><option>الشتاء</option><option>الصيف</option><option>الربيع</option><option>الخريف</option></select>
+            </div>
+        </div>
 
-            <div class="card table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th rowspan="2">المحل / المستأجر</th>
-                            <th colspan="5" class="rent-section">حساب الإيجار ومواعيد العقود (ر.ع)</th>
-                            <th colspan="3" class="bill-section">حساب الفواتير (ر.ع)</th>
-                            <th rowspan="2">التقرير</th>
-                        </tr>
-                        <tr>
-                            <th class="rent-section">المطلوب</th>
-                            <th class="rent-section">المدفوع</th>
-                            <th class="rent-section">المتبقي</th>
-                            <th class="rent-section">الدفع القادم</th>
-                            <th class="rent-section">انتهاء العقد</th>
-                            <th class="bill-section">المطلوب</th>
-                            <th class="bill-section">المدفوع</th>
-                            <th class="bill-section">المتبقي</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+        <div class="form-group">
+            <label>الإحداثيات (انقر على الخريطة للتحديد)</label>
+            <input type="text" id="coords" value="24.71, 46.67">
+        </div>
+
+        <button class="action-btn" onclick="addData()"><i class="fas fa-plus"></i> إضافة حادثة</button>
+        <button class="action-btn" style="background: var(--secondary); color: #000;" onclick="runDeepAnalysis()">
+            <i class="fas fa-brain"></i> تشغيل التنبؤ والتوصيات
+        </button>
+
+        <div class="incidents-list-box">
+            <h5><i class="fas fa-history"></i> الحوادث المسجلة:</h5>
+            <div id="incidentsContainer"></div>
+        </div>
+
+        <div id="analysisResult" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; display: none;">
+            <div style="text-align: center;">
+                <span id="economyTag" style="font-size: 0.7em; padding: 2px 8px; border-radius: 10px; border: 1px solid;"></span>
+                <div id="riskPercent" style="font-size: 2.5em; font-weight: bold; color: var(--primary);">0%</div>
+            </div>
+            <p id="analysisText" style="font-size: 0.85em; border-top: 1px solid #333; padding-top: 10px;"></p>
+            
+            <div id="recommendationBox" class="recommendation-box" style="display:none;">
+                <h5><i class="fas fa-lightbulb"></i> التوصيات الأمنية:</h5>
+                <ul id="recomList" style="padding-right: 20px; margin: 0; line-height: 1.6;"></ul>
             </div>
         </div>
     </div>
 
-    <script>
-        function startApp() {
-            document.getElementById('welcome-screen').style.transform = 'translateY(-100%)';
-            document.getElementById('main-content').style.display = 'block';
-            setTimeout(() => { document.getElementById('main-content').style.opacity = '1'; }, 100);
-            renderTable();
+    <div style="flex-grow: 1; display: flex; flex-direction: column;">
+        <div id="map"></div>
+        <div style="height: 180px; padding: 10px; background: #0a0a14;">
+            <canvas id="mainChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    function enterSystem() {
+        document.getElementById('landing-page').style.transform = 'translateY(-100%)';
+        document.getElementById('main-system').style.opacity = '1';
+        document.getElementById('main-system').style.visibility = 'visible';
+        setTimeout(() => { map.invalidateSize(); }, 600);
+    }
+
+    let crimeData = JSON.parse(localStorage.getItem('thawd_v4')) || [];
+    let map = L.map('map').setView([24.71, 46.67], 12);
+    let markersLayer = L.layerGroup().addTo(map);
+    let tempMarker = null;
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+    // ميزة النقر على الخريطة
+    map.on('click', function(e) {
+        let lat = e.latlng.lat.toFixed(4);
+        let lng = e.latlng.lng.toFixed(4);
+        document.getElementById('coords').value = `${lat}, ${lng}`;
+        
+        if(tempMarker) map.removeLayer(tempMarker);
+        tempMarker = L.marker(e.latlng).addTo(map).bindPopup("موقع الحادثة المختار").openPopup();
+    });
+
+    let ctx = document.getElementById('mainChart').getContext('2d');
+    let myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['سرقة', 'اعتداء', 'تخريب', 'احتيال', 'سطو'],
+            datasets: [{
+                label: 'عدد الحوادث المسجلة',
+                data: [0, 0, 0, 0, 0],
+                backgroundColor: ['#ff2e63', '#08d9d6', '#ffde7d', '#f08a5d', '#6a2c70']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: '#fff' } } } }
+    });
+
+    function addData() {
+        const entry = {
+            id: Date.now(), // معرف فريد للحذف
+            type: document.getElementById('crimeType').value,
+            area: document.getElementById('areaEconomy').value,
+            reason: document.getElementById('crimeReason').value,
+            time: document.getElementById('crimeTime').value,
+            season: document.getElementById('crimeSeason').value,
+            coords: document.getElementById('coords').value.split(',').map(Number)
+        };
+        crimeData.push(entry);
+        saveAndUpdate();
+        if(tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+    }
+
+    function deleteIncident(id) {
+        crimeData = crimeData.filter(item => item.id !== id);
+        saveAndUpdate();
+    }
+
+    function saveAndUpdate() {
+        localStorage.setItem('thawd_v4', JSON.stringify(crimeData));
+        renderMarkers();
+        renderList();
+        updateStats();
+    }
+
+    function renderMarkers() {
+        markersLayer.clearLayers();
+        crimeData.forEach(entry => {
+            let areaColor = entry.area === 'غنية' ? '#ffd700' : (entry.area === 'فقيرة' ? '#adff2f' : '#08d9d6');
+            L.circle(entry.coords, { color: areaColor, radius: 500 }).addTo(markersLayer).bindPopup(`نمط: ${entry.type}`);
+        });
+    }
+
+    function renderList() {
+        const container = document.getElementById('incidentsContainer');
+        container.innerHTML = "";
+        crimeData.slice(-5).reverse().forEach(entry => {
+            const div = document.createElement('div');
+            div.className = 'incident-item';
+            div.innerHTML = `
+                <span><b>${entry.type}</b> - ${entry.area}</span>
+                <button class="delete-btn" onclick="deleteIncident(${entry.id})"><i class="fas fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateStats() {
+        const counts = [0,0,0,0,0];
+        const labels = ['سرقة', 'اعتداء', 'تخريب', 'احتيال', 'سطو'];
+        crimeData.forEach(d => { const i = labels.indexOf(d.type); if(i > -1) counts[i]++; });
+        myChart.data.datasets[0].data = counts;
+        myChart.update();
+    }
+
+    function generateRecommendations(entry) {
+        let recoms = [];
+        if (entry.area === 'غنية') {
+            recoms.push("تعزيز أنظمة الإنذار المبكر المربوطة بغرفة العمليات.");
+            recoms.push("توعية السكان بضرورة فحص كاميرات المراقبة المنزلية.");
+        } else if (entry.area === 'فقيرة') {
+            recoms.push("تكثيف الدوريات الأمنية الراجلة في الأزقة الضيقة.");
+            recoms.push("إطلاق برامج دعم اجتماعي لمعالجة الدافع الاقتصادي.");
         }
+        if (entry.reason === 'أمني') recoms.push("إضافة إضاءة كافية وتغطية المنطقة بكاميرات CCTV ذكية.");
+        if (entry.reason === 'مخدرات') recoms.push("تنسيق حملة مداهمات مع إدارة مكافحة المخدرات في المحيط.");
+        if (entry.time === 'فجراً') recoms.push("نشر نقاط تفتيش مفاجئة عند مداخل المخارج في هذا التوقيت.");
+        return recoms;
+    }
 
-        let shops = JSON.parse(localStorage.getItem('musannah_final_v5')) || [
-            { id: 1, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
-            { id: 2, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
-            { id: 3, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] },
-            { id: 4, tenant: '-', rent: 0, rentPaid: 0, billsTotal: 0, billsPaid: 0, startDate: '', endDate: '', cycle: 1, logs: [] }
-        ];
+    function runDeepAnalysis() {
+        if(crimeData.length < 2) return alert("البيانات قليلة للتحليل.");
+        const last = crimeData[crimeData.length - 1];
+        let score = 20;
 
-        function updateShop() {
-            const i = document.getElementById('shopId').value - 1;
-            shops[i].tenant = document.getElementById('tenantName').value || '-';
-            shops[i].rent = parseFloat(document.getElementById('rentAmount').value) || 0;
-            shops[i].startDate = document.getElementById('startDate').value;
-            shops[i].endDate = document.getElementById('endDate').value;
-            shops[i].cycle = parseInt(document.getElementById('payCycle').value);
-            save();
-            alert("تم تحديث بيانات العقد");
+        crimeData.slice(0, -1).forEach(old => {
+            if(old.area === last.area) score += 10;
+            if(old.reason === last.reason) score += 15;
+            let d = Math.sqrt(Math.pow(old.coords[0]-last.coords[0], 2) + Math.pow(old.coords[1]-last.coords[1], 2));
+            if(d < 0.05) score += 30;
+        });
+
+        const final = Math.min(score, 99);
+        document.getElementById('riskPercent').innerText = final + "%";
+        document.getElementById('analysisResult').style.display = 'block';
+        document.getElementById('analysisText').innerHTML = `النمط: استهداف منطقة <b>${last.area}</b> لدافع <b>${last.reason}</b>.`;
+
+        const recomList = document.getElementById('recomList');
+        recomList.innerHTML = "";
+        const recommendations = generateRecommendations(last);
+        recommendations.forEach(r => {
+            let li = document.createElement('li');
+            li.innerText = r;
+            recomList.appendChild(li);
+        });
+        document.getElementById('recommendationBox').style.display = recommendations.length > 0 ? 'block' : 'none';
+
+        if(final >= 80) {
+            document.getElementById('modalMsg').innerText = `خطورة قصوى! تكرار الأنماط في منطقة ${last.area} يتطلب تدخل عاجل.`;
+            document.getElementById('alertModal').style.display = 'block';
+            L.marker(last.coords, { icon: L.divIcon({ className: 'pulse-icon', iconSize: [30, 30] }) }).addTo(markersLayer);
         }
+    }
 
-        function addAction(type) {
-            if(type === 'pay') {
-                const i = document.getElementById('payShopId').value - 1;
-                const amt = parseFloat(document.getElementById('payAmount').value);
-                const target = document.getElementById('payTarget').value;
-                if(!amt) return;
-                if(target === 'rent') shops[i].rentPaid += amt; else shops[i].billsPaid += amt;
-                document.getElementById('payAmount').value = '';
-            } else {
-                const i = document.getElementById('billShopId').value - 1;
-                const amt = parseFloat(document.getElementById('billAmount').value);
-                const note = document.getElementById('billNote').value;
-                if(!amt) return;
-                shops[i].billsTotal += amt;
-                document.getElementById('billAmount').value = '';
-            }
-            save();
-        }
-
-        function save() {
-            localStorage.setItem('musannah_final_v5', JSON.stringify(shops));
-            localStorage.setItem('owner_phone', document.getElementById('ownerPhone').value);
-            renderTable();
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            const phone = localStorage.getItem('owner_phone') || '';
-            const today = new Date();
-
-            shops.forEach(shop => {
-                let nextPay = '-';
-                if (shop.startDate) {
-                    let d = new Date(shop.startDate);
-                    while (d <= today) d.setMonth(d.getMonth() + shop.cycle);
-                    nextPay = d.toISOString().split('T')[0];
-                }
-
-                let endClass = '';
-                if (shop.endDate) {
-                    const end = new Date(shop.endDate);
-                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 0) endClass = 'expiry-alert';
-                    else if (diffDays <= 30) endClass = 'expiry-warning';
-                }
-
-                let rentRem = shop.rent - shop.rentPaid;
-                let billRem = shop.billsTotal - shop.billsPaid;
-
-                const msg = `🏢 *تقرير محل ${shop.id}*%0A👤 ${shop.tenant}%0A------------------%0A🏠 *الإيجار:*%0Aالمتبقي: ${rentRem} ر.ع%0A📅 القادم: ${nextPay}%0A⌛ انتهاء العقد: ${shop.endDate || '-'}%0A------------------%0A🔌 *الفواتير:*%0Aالمتبقي: ${billRem} ر.ع`;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>#${shop.id}</b><br><small>${shop.tenant}</small></td>
-                        <td class="rent-section">${shop.rent}</td>
-                        <td class="rent-section">${shop.rentPaid}</td>
-                        <td class="rent-section" style="font-weight:bold; color:${rentRem>0?'red':'green'}">${rentRem}</td>
-                        <td class="rent-section">${nextPay}</td>
-                        <td class="rent-section"><span class="${endClass}">${shop.endDate || '-'}</span></td>
-                        <td class="bill-section">${shop.billsTotal}</td>
-                        <td class="bill-section">${shop.billsPaid}</td>
-                        <td class="bill-section" style="font-weight:bold; color:${billRem>0?'red':'green'}">${billRem}</td>
-                        <td><a href="https://wa.me/${phone}?text=${msg}" target="_blank" class="whatsapp-btn">واتساب 💬</a></td>
-                    </tr>
-                `;
-            });
-        }
-    </script>
+    function closeModal() { document.getElementById('alertModal').style.display = 'none'; }
+    
+    window.onload = () => {
+        saveAndUpdate();
+    };
+</script>
 </body>
 </html>
